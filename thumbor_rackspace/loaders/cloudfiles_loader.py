@@ -25,7 +25,7 @@ def load(context, path, callback):
             context.config.RACKSPACE_LOADER_CONTAINER
         )
 
-    if key not CONNECTIONS:
+    if key not in CONNECTIONS:
         if(context.config.RACKSPACE_PYRAX_REGION):
             pyrax.set_default_region(context.config.RACKSPACE_PYRAX_REGION)
         pyrax.set_setting('identity_type', context.config.get('RACKSPACE_PYRAX_IDENTITY_TYPE','rackspace'))
