@@ -13,15 +13,27 @@ from thumbor.utils import logger
 from tornado.concurrent import return_future
 import pyrax
 
+CONNECTIONS = {}
 
 @return_future
 def load(context, path, callback):
-    if(context.config.RACKSPACE_PYRAX_REGION):
-        pyrax.set_default_region(context.config.RACKSPACE_PYRAX_REGION)
-    pyrax.set_setting('identity_type', context.config.get('RACKSPACE_PYRAX_IDENTITY_TYPE','rackspace'))
-    pyrax.set_credential_file(expanduser(context.config.RACKSPACE_PYRAX_CFG))
-    cf = pyrax.connect_to_cloudfiles(public=context.config.RACKSPACE_PYRAX_PUBLIC)
-    cont = cf.get_container(context.config.RACKSPACE_LOADER_CONTAINER)
+    key = (
+            context.config.RACKSPACE_PYRAX_REGION, 
+            context.config.get('RACKSPACE_PYRAX_IDENTITY_TYPE','rackspace'),
+            context.config.RACKSPACE_PYRAX_CFG,
+            context.config.RACKSPACE_PYRAX_PUBLIC,
+            context.config.RACKSPACE_LOADER_CONTAINER
+        )
+
+    if key not CONNECTIONS:
+        if(context.config.RACKSPACE_PYRAX_REGION):
+            pyrax.set_default_region(context.config.RACKSPACE_PYRAX_REGION)
+        pyrax.set_setting('identity_type', context.config.get('RACKSPACE_PYRAX_IDENTITY_TYPE','rackspace'))
+        pyrax.set_credential_file(expanduser(context.config.RACKSPACE_PYRAX_CFG))
+        cf = pyrax.connect_to_cloudfiles(public=context.config.RACKSPACE_PYRAX_PUBLIC)
+        CONNECTIONS[key] = cf.get_container(context.config.RACKSPACE_LOADER_CONTAINER)
+
+    cont = CONNECTIONS[key]
     file_abspath = normalize_path(context, path)
     logger.debug("[LOADER] getting from %s/%s" % (context.config.RACKSPACE_LOADER_CONTAINER, file_abspath))
     try:
